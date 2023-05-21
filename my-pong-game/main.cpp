@@ -6,8 +6,11 @@
 //
 
 #include <GLUT/GLUT.h> // Include the GLUT library
+#include <string>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+using namespace std;
+//#include <GL/glut.h> // Include the GLUT library
 
 int windowWidth = 800; // Width of the game window
 int windowHeight = 600; // Height of the game window
@@ -32,6 +35,9 @@ bool isPaddle1DownPressed = false;
 bool isPaddle2UpPressed = false;
 bool isPaddle2DownPressed = false;
 
+enum GameState { MENU, PLAYING }; // Game states
+GameState gameState = MENU;
+
 void drawPaddle(float x, float y) {
     glBegin(GL_QUADS);
     glVertex2f(x, y);
@@ -50,65 +56,104 @@ void drawBall(float x, float y) {
     glEnd();
 }
 
+//void displayMenu() {
+//    glClear(GL_COLOR_BUFFER_BIT);
+//
+//    glLoadIdentity();
+//
+//    // Draw the menu text
+//    glRasterPos2f(windowWidth / 2 - 60, windowHeight / 2);
+//    glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)"Press SPACE to start");
+//
+//    glutSwapBuffers();
+//}
+void displayMenu() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+
+    // Set the color for the menu text
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // Set the position of the menu text
+    float textPosX = windowWidth / 2 - 100;
+    float textPosY = windowHeight / 2;
+
+    // Draw each character of the menu text
+    string menuText = "Press SPACE to start";
+    for (int i = 0; i < menuText.length(); i++) {
+        glRasterPos2f(textPosX, textPosY);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, menuText[i]);
+        textPosX += glutBitmapWidth(GLUT_BITMAP_TIMES_ROMAN_24, menuText[i]);
+    }
+
+    glutSwapBuffers();
+}
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glLoadIdentity();
 
-    // Draw the paddles
-    drawPaddle(10, paddle1Y);
-    drawPaddle(windowWidth - paddleWidth - 10, paddle2Y);
+    if (gameState == MENU) {
+        displayMenu();
+    } else if (gameState == PLAYING) {
+        // Draw the paddles
+        drawPaddle(10, paddle1Y);
+        drawPaddle(windowWidth - paddleWidth - 10, paddle2Y);
 
-    // Draw the ball
-    drawBall(ballX, ballY);
+        // Draw the ball
+        drawBall(ballX, ballY);
 
-    // Draw the scores
-    glRasterPos2f(windowWidth / 2 - 20, 20);
-    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, score1 + '0');
-    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, '-');
-    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, score2 + '0');
+        // Draw the scores
+        glRasterPos2f(windowWidth / 2 - 20, 20);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, score1 + '0');
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, '-');
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, score2 + '0');
+    }
 
     glutSwapBuffers();
 }
 
 void update(int value) {
-    // Update the ball position
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
+    if (gameState == PLAYING) {
+        // Update the ball position
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
 
-    // Ball collision with the paddles
-    if (ballX <= paddleWidth && ballY >= paddle1Y && ballY <= paddle1Y + paddleHeight)
-        ballSpeedX = -ballSpeedX;
+        // Ball collision with the paddles
+        if (ballX <= paddleWidth && ballY >= paddle1Y && ballY <= paddle1Y + paddleHeight)
+            ballSpeedX = -ballSpeedX;
 
-    if (ballX >= windowWidth - paddleWidth - ballSize && ballY >= paddle2Y && ballY <= paddle2Y + paddleHeight)
-        ballSpeedX = -ballSpeedX;
+        if (ballX >= windowWidth - paddleWidth - ballSize && ballY >= paddle2Y && ballY <= paddle2Y + paddleHeight)
+            ballSpeedX = -ballSpeedX;
 
-    // Ball collision with the top and bottom walls
-    if (ballY >= windowHeight - ballSize || ballY <= 0)
-        ballSpeedY = -ballSpeedY;
+        // Ball collision with the top and bottom walls
+        if (ballY >= windowHeight - ballSize || ballY <= 0)
+            ballSpeedY = -ballSpeedY;
 
-    // Paddle movement
-    if (isPaddle1UpPressed && paddle1Y > 0)
-        paddle1Y -= 5;
-    if (isPaddle1DownPressed && paddle1Y < windowHeight - paddleHeight)
-        paddle1Y += 5;
-    if (isPaddle2UpPressed && paddle2Y > 0)
-        paddle2Y -= 5;
-    if (isPaddle2DownPressed && paddle2Y < windowHeight - paddleHeight)
-        paddle2Y += 5;
+        // Paddle movement
+        if (isPaddle1UpPressed && paddle1Y > 0)
+            paddle1Y -= 5;
+        if (isPaddle1DownPressed && paddle1Y < windowHeight - paddleHeight)
+            paddle1Y += 5;
+        if (isPaddle2UpPressed && paddle2Y > 0)
+            paddle2Y -= 5;
+        if (isPaddle2DownPressed && paddle2Y < windowHeight - paddleHeight)
+            paddle2Y += 5;
 
-    // Ball out of bounds
-    if (ballX < 0) {
-        score2++;
-        ballX = windowWidth / 2 - ballSize / 2;
-        ballY = windowHeight / 2 - ballSize / 2;
-        ballSpeedX = -ballSpeedX;
-    }
-    if (ballX > windowWidth - ballSize) {
-        score1++;
-        ballX = windowWidth / 2 - ballSize / 2;
-        ballY = windowHeight / 2 - ballSize / 2;
-        ballSpeedX = -ballSpeedX;
+        // Ball out of bounds
+        if (ballX < 0) {
+            score2++;
+            ballX = windowWidth / 2 - ballSize / 2;
+            ballY = windowHeight / 2 - ballSize / 2;
+            ballSpeedX = -ballSpeedX;
+        }
+        if (ballX > windowWidth - ballSize) {
+            score1++;
+            ballX = windowWidth / 2 - ballSize / 2;
+            ballY = windowHeight / 2 - ballSize / 2;
+            ballSpeedX = -ballSpeedX;
+        }
     }
 
     glutPostRedisplay();
@@ -116,6 +161,10 @@ void update(int value) {
 }
 
 void keyPressed(unsigned char key, int x, int y) {
+    if (gameState == MENU && key == ' ') {
+        gameState = PLAYING;
+    }
+
     switch (key) {
         case 'w':
             isPaddle1UpPressed = true;
