@@ -4,39 +4,51 @@
 //
 //  Created by asamahy on 5/21/23.
 //
-
-#include <GLUT/GLUT.h> // Include the GLUT library
+#include <iostream>
+#include <GLUT/GLUT.h>
 #include <string>
+using namespace std;
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-using namespace std;
-//#include <GL/glut.h> // Include the GLUT library
 
-int windowWidth = 800; // Width of the game window
-int windowHeight = 600; // Height of the game window
+// Window dimensions
+int windowWidth = 800;
+int windowHeight = 600;
 
-int paddleWidth = 10; // Width of the paddles
-int paddleHeight = 80; // Height of the paddles
+// Paddle dimensions
+int paddleWidth = 10;
+int paddleHeight = 80;
 
-int paddle1Y = windowHeight / 2 - paddleHeight / 2; // Y-coordinate of the first paddle
-int paddle2Y = windowHeight / 2 - paddleHeight / 2; // Y-coordinate of the second paddle
+// Paddle positions
+int paddle1Y = windowHeight / 2 - paddleHeight / 2;
+int paddle2Y = windowHeight / 2 - paddleHeight / 2;
 
-int ballSize = 10; // Diameter of the ball
-float ballX = windowWidth / 2 - ballSize / 2; // X-coordinate of the ball
-float ballY = windowHeight / 2 - ballSize / 2; // Y-coordinate of the ball
-float ballSpeedX = -2.0f; // X-axis speed of the ball
-float ballSpeedY = 1.5f; // Y-axis speed of the ball
+// Ball dimensions
+int ballSize = 10;
 
-int score1 = 0; // Score of player 1
-int score2 = 0; // Score of player 2
+// Ball position and speed
+float ballX = windowWidth / 2 - ballSize / 2;
+float ballY = windowHeight / 2 - ballSize / 2;
+float ballSpeedX = -2.0f;
+float ballSpeedY = 1.5f;
 
+// Scores
+int score1 = 0;
+int score2 = 0;
+
+// Game states
+enum GameState { MENU, PLAYING, EXIT };
+GameState gameState = MENU;
+
+// Menu options
+int menuOption = 1;
+
+// Keyboard input flags
 bool isPaddle1UpPressed = false;
 bool isPaddle1DownPressed = false;
 bool isPaddle2UpPressed = false;
 bool isPaddle2DownPressed = false;
-
-enum GameState { MENU, PLAYING }; // Game states
-GameState gameState = MENU;
 
 void drawPaddle(float x, float y) {
     glBegin(GL_QUADS);
@@ -56,17 +68,6 @@ void drawBall(float x, float y) {
     glEnd();
 }
 
-//void displayMenu() {
-//    glClear(GL_COLOR_BUFFER_BIT);
-//
-//    glLoadIdentity();
-//
-//    // Draw the menu text
-//    glRasterPos2f(windowWidth / 2 - 60, windowHeight / 2);
-//    glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)"Press SPACE to start");
-//
-//    glutSwapBuffers();
-//}
 void displayMenu() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -75,20 +76,34 @@ void displayMenu() {
     // Set the color for the menu text
     glColor3f(1.0f, 1.0f, 1.0f);
 
-    // Set the position of the menu text
-    float textPosX = windowWidth / 2 - 100;
-    float textPosY = windowHeight / 2;
+    // Set the position of the menu options
+    float textPosX = windowWidth / 2 - 60;
+    float textPosY = windowHeight / 2 + 20;
 
-    // Draw each character of the menu text
-    string menuText = "Press SPACE to start";
-    for (int i = 0; i < menuText.length(); i++) {
-        glRasterPos2f(textPosX, textPosY);
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, menuText[i]);
-        textPosX += glutBitmapWidth(GLUT_BITMAP_TIMES_ROMAN_24, menuText[i]);
+    // Draw the menu options
+    string option1 = "Start Game";
+    if (menuOption == 1) {
+        glRasterPos2f(textPosX - 10, textPosY);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, '>');
+    }
+    glRasterPos2f(textPosX, textPosY);
+    for (int i = 0; i < option1.length(); i++) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, option1[i]);
+    }
+
+    string option2 = "Quit";
+    if (menuOption == 2) {
+        glRasterPos2f(textPosX - 10, textPosY + 30);
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, '>');
+    }
+    glRasterPos2f(textPosX, textPosY + 30);
+    for (int i = 0; i < option2.length(); i++) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, option2[i]);
     }
 
     glutSwapBuffers();
 }
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -160,11 +175,24 @@ void update(int value) {
     glutTimerFunc(10, update, 0);
 }
 
-void keyPressed(unsigned char key, int x, int y) {
-    if (gameState == MENU && key == ' ') {
-        gameState = PLAYING;
+void specialKeyPressed(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_UP:
+            if (gameState == MENU) {
+                if (menuOption > 1)
+                    menuOption--;
+            }
+            break;
+        case GLUT_KEY_DOWN:
+            if (gameState == MENU) {
+                if (menuOption < 2)
+                    menuOption++;
+            }
+            break;
     }
+}
 
+void keyPressed(unsigned char key, int x, int y) {
     switch (key) {
         case 'w':
             isPaddle1UpPressed = true;
@@ -177,6 +205,26 @@ void keyPressed(unsigned char key, int x, int y) {
             break;
         case 'k':
             isPaddle2DownPressed = true;
+            break;
+        case ' ':
+        case 13: // Enter key
+            if (gameState == MENU) {
+                if (menuOption == 1)
+                    gameState = PLAYING;
+                else if (menuOption == 2)
+                    gameState = EXIT;
+            }
+            break;
+        case 27: // ESC key
+            gameState = EXIT;
+            break;
+        case 9: // Tab key
+            if (gameState == MENU) {
+                if (menuOption == 1)
+                    menuOption = 2;
+                else if (menuOption == 2)
+                    menuOption = 1;
+            }
             break;
     }
 }
@@ -199,7 +247,7 @@ void keyReleased(unsigned char key, int x, int y) {
 }
 
 void reshape(int width, int height) {
-    glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+    glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0, width, height, 0);
@@ -215,9 +263,12 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
     glutTimerFunc(10, update, 0);
     glutKeyboardFunc(keyPressed);
+    glutSpecialFunc(specialKeyPressed);
     glutKeyboardUpFunc(keyReleased);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glutMainLoop();
+
     return 0;
 }
+
 #pragma GCC diagnostic pop
